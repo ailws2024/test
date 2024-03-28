@@ -1,54 +1,65 @@
-from randnum import generate_random_number
 import streamlit as st
+from apscheduler.schedulers.background import BackgroundScheduler
 import smtplib
-from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import random
+import time
 
-def send_email(subject, message, to_addr, from_addr, password):
-    """
-    Send an email using Python.
-
-    :param subject: Email subject as a string.
-    :param message: Email message body as a string.
-    :param to_addr: Recipient email address as a string.
-    :param from_addr: Sender email address as a string.
-    :param password: Password for the sender's email account.
-    """
-    # Create MIME message
-    mime_message = MIMEMultipart()
-    mime_message['From'] = from_addr
-    mime_message['To'] = to_addr
-    mime_message['Subject'] = subject
-    mime_message.attach(MIMEText(message, 'plain'))
+# Email sending function
+def send_email(recipient, subject, body):
+    sender_email = "ftpb2024.1776@gmail.com"
+    sender_password = "oyls tmvu cpko kyqc"
     
+    # Create MIME message
+    message = MIMEMultipart("alternative")
+    message["Subject"] = subject
+    message["From"] = sender_email
+    message["To"] = recipient
+
+    # Turn the body into a MIMEText object
+    part = MIMEText(body, "plain")
+    message.attach(part)
+
+    # Send the email
     try:
-        # Setup the SMTP server
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()  # Enable security
-        server.login(from_addr, password)  # Login to the SMTP server
-        server.send_message(mime_message)  # Send the email
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, recipient, message.as_string())
         server.quit()
-        print("Email sent successfully!")
+        print(f"Email sent to {recipient}.")
     except Exception as e:
         print(f"Failed to send email: {e}")
 
-# Example usage
-if __name__ == "__main__":
-    # Your details
-    FROM_EMAIL = "ftpb2024.1776@gmail.com"
-    EMAIL_PASSWORD = "oyls tmvu cpko kyqc"
-    TO_EMAIL = "ftpb2024.1776@gmail.com"
-    SUBJECT = "Test Email from Python"
-    MESSAGE = "This is a test email sent from a Python script."
+# Function to be scheduled - sends an email at random intervals
+def scheduled_email_job():
+    # Here, you'd fetch your email details (recipient, subject, body) probably stored from the Streamlit inputs
+    recipient = "ftb2024.1776@gmail.com"  # Placeholder values
+    subject = "Your Subject Here"
+    body = "Your email body here."
+    send_email(recipient, subject, body)
+    print("Email scheduled job executed.")
 
-    send_email(SUBJECT, MESSAGE, TO_EMAIL, FROM_EMAIL, EMAIL_PASSWORD)
+# Initialize the scheduler
+scheduler = BackgroundScheduler()
+scheduler.add_job(scheduled_email_job, 'interval', seconds=random.randint(10, 100))
+scheduler.start()
 
+# Prevent the scheduler from shutting down immediately
+try:
+    while True:
+        time.sleep(2)
+except (KeyboardInterrupt, SystemExit):
+    scheduler.shutdown()
 
-def main():
-    st.title("display")
-    for number in generate_random_number():
-        if number < 10:
-            print("This works")
+# Streamlit UI
+st.title("Email Automation App")
 
-if __name__ == "__main__":
-    main()
+recipient = st.text_input("Recipient Email")
+subject = st.text_input("Email Subject")
+body = st.text_area("Email Body")
+
+if st.button("Schedule Email"):
+    # Here, instead of sending directly, store these details and let the scheduled job use them
+    st.write("Email scheduled!")
+
