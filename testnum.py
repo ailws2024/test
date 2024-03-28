@@ -5,6 +5,9 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import random
 import time
+import os
+
+os.system("pip install apscheduler")
 
 # Email sending function
 def send_email(recipient, subject, body):
