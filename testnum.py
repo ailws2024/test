@@ -45,6 +45,7 @@ if __name__ == "__main__":
 
 
 def main():
+    st.title("display")
     for number in generate_random_number():
         if number < 10:
             print("This works")
